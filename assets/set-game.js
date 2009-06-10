@@ -6,7 +6,6 @@ jQuery(function($) {
 // ============================================================================
 
     var conf= {};
-    var deck= [];
 
 // ============================================================================
 //      Utility Functions
@@ -124,259 +123,292 @@ jQuery(function($) {
     //      Cards
     // ============================================================================
 
-    var _deck_selected= [];
-    var _deck_solutions= null;
-
-    var cards= [];
-
-    var cards_init= function() {
-        var html= [];
-        var id= 0;
-        html.push("<table>");
-        for (var y= 0; y < 3; y++) {
-            html.push("<tr>");
-            for (var x= 0; x < 4; x++) {
-                var id= y + x * 3;
-                html.push("<td><div class='card' id='card", id, "'></div></td>");
-            }
-            html.push("</tr>");
-        }
-        html.push("</table>");
-        $("#cards").html(html.join(''));
-
-        for (var i= 0; i < 12; i++) {
-            cards.push(new Card(i));
-        }
-    };
-
-    var cards_refresh= function() {
-
-        _deck_selected.length == 3
-            ? $("#cards").addClass("set-fail")
-            : $("#cards").removeClass("set-fail");
-
-        var lookup= deck_selected_lookup();
-        for (var i= 0; i < 12; i++) {
-            var face= cards[i].getFace();
-            if (face < 0) continue;
-            lookup[face] ? cards[i].select() : cards[i].deselect();
-        }
-    };
-
-    var card_by_face= function(face) {
-        for (var i= 0; i < 12; i++) {
-            if (cards[i].getFace() == face) return cards[i];
-        }
-        return null;
-    };
-
+    // BROKEN
     var show_status= function() {
         var count= deck_solutions().length > 0;
         $("#solutions").text(count);
     };
 
     // ============================================================================
-    //      Deck
+    //      Card Stack
     // ============================================================================
 
-    var deck_init= function() {
-        for (var i= 0; i < 81; i++) deck[i]= i;
-        for (var i= 0; i < 81; i++) {
-            var n= Math.floor(Math.random() * 81);
-            var tmp= deck[i];
-            deck[i]= deck[n];
-            deck[n]= tmp;
-        }
-        for (var i= 0; i < 12; i++) cards[i].setFace(deck[i]);
-    }
+    var CardStack= function() {
+        var _stack= [];
+        var _solutions= null;
 
-    var deck_selected_lookup= function() {
-        var result= {};
-        for (var i= 0; i < _deck_selected.length; i++) {
-            result[_deck_selected[i]]= i + 1;
-        }
-        return result;
-    };
+        var add= function(faces) {
+            $.each($.makeArray(faces), function(_, face) {
+                _stack.push(face);
+            });
+            _solutions= null;
+        };
 
-    var deck_deselect_all= function() {
-        _deck_selected= [];
-        cards_refresh();
-    };
+        var removeFace= function(faces) {
+            $.each($.makeArray(faces), function(_, face) {
+                var i= $.inArray(face, _stack);
+                if (i >= 0) _stack.splice(i, 1);
+            });
+            _solutions= null;
+        };
 
-    var deck_selected= function(deck_i) {
-        for (var i= 0; i < _deck_selected.length; i++) {
-            if (_deck_selected[i] == deck_i) return true;
-        }
-        return false;
-    }
+        var pull= function() {
+            _solutions= null;
+            return _stack.shift();
+        };
 
-    var deck_toggle_select= function(deck_i) {
-        for (var i= 0; i < _deck_selected.length; i++) {
-            if (_deck_selected[i] == deck_i) {
-                _deck_selected.splice(i, 1);
-                cards_refresh();
-                return;
+        var shuffle= function() {
+            for (var i= 0; i < _stack.length; i++) {
+                var n= Math.floor(Math.random() * _stack.length);
+                var tmp= _stack[i];
+                _stack[i]= _stack[n];
+                _stack[n]= tmp;
             }
-        }
-        _deck_selected.push(deck_i);
-        cards_refresh();
-    };
 
-    var deck_solutions= function() {
+            // solutions stay the same
+        };
 
-        if (_deck_solutions) return _deck_solutions;
+        var solutions= function() {
 
-        var result= [];
+            if (_solutions) return _solutions;
 
-        var check= [];
-        for (var i= 0; i < 12 && i < deck.length; i++) {
-            var face= deck[i];
-            var one= [ face ];
-            for (var j= 0; j < 4; j++) {
-                one.push(face % 3);
-                face = Math.floor(face / 3);
+            var check= [];
+            for (var i= 0; i < _stack.length; i++) {
+                var face= _stack[i];
+                var one= [ face ];
+                for (var j= 0; j < 4; j++) {
+                    one.push(face % 3);
+                    face = Math.floor(face / 3);
+                }
+                check.push(one.concat());
             }
-            check.push(one.concat());
-        }
 
-        for (var i0= check.length - 1; i0 >= 2; i0--) {
-            for (var i1= i0 - 1; i1 >= 1; i1--) {
-                for (var i2= i1 - 1; i2 >= 0; i2--) {
-                    var check0= check[i0];
-                    var check1= check[i1];
-                    var check2= check[i2];
-                    var prop_i= 4;
-                    for (; prop_i > 0; prop_i--) {
-                        if ((check0[prop_i] != check1[prop_i]
-                                || check1[prop_i] != check2[prop_i])
-                            && (check0[prop_i] == check1[prop_i]
-                                || check1[prop_i] == check2[prop_i]
-                                || check2[prop_i] == check0[prop_i])
-                            ) break;
+            _solutions= [];
+            for (var i0= check.length - 1; i0 >= 2; i0--) {
+                for (var i1= i0 - 1; i1 >= 1; i1--) {
+                    for (var i2= i1 - 1; i2 >= 0; i2--) {
+                        var check0= check[i0];
+                        var check1= check[i1];
+                        var check2= check[i2];
+                        var prop_i= 4;
+                        for (; prop_i > 0; prop_i--) {
+                            if ((check0[prop_i] != check1[prop_i]
+                                    || check1[prop_i] != check2[prop_i])
+                                && (check0[prop_i] == check1[prop_i]
+                                    || check1[prop_i] == check2[prop_i]
+                                    || check2[prop_i] == check0[prop_i])
+                                ) break;
+                        }
+                        if (prop_i > 0) continue;
+
+                        // console.log([ i2, i1, i0 ]);
+
+                        var one= [ check0[0], check1[0], check2[0] ];
+                        one.sort(intcmp);
+                        _solutions.push(one.concat());
                     }
-                    if (prop_i > 0) continue;
-
-                    console.log([ i2, i1, i0 ]);
-
-                    var one= [ check0[0], check1[0], check2[0] ];
-                    one.sort(intcmp);
-                    result.push(one.concat());
                 }
             }
-        }
+            return _solutions;
+        };
 
-        // console.log(result);
-        // console.log({ c: check, r: result });
+        var pull2= function(basis, count) {
+            var result= [];
+            for (var i= basis.length; i < count; i++) {
+                result.push(pull());
+            }
+            return result;
+        };
 
-        return _deck_solutions= result;
+        var getStack= function() {
+            return _stack;
+        };
+
+        var getFace= function(i) {
+            if (i >= _stack.length) return -1;
+            return _stack[i];
+        };
+
+        var getCount= function(i) {
+            return _stack.length;
+        };
+
+        this.add= add;
+        this.pull= pull;
+        this.pull2= pull2;
+        this.removeFace= removeFace;
+        this.shuffle= shuffle;
+        this.solutions= solutions;
+        this.stack= getStack;
+        this.get= getFace;
+        this.count= getCount;
+        return this;
     };
 
-    var deck_next_cards= function() {
+    // ============================================================================
+    //      Visible Cards
+    // ============================================================================
 
-        var ch_cards= [];
-        var lookup= deck_selected_lookup();
+    var VisibleCards= function(hdeck, vcards_n) {
+        var _vdeck= new CardStack();
+        var _selected= [];
+        var _cards= [];
 
-        for (var deck_i= 0; deck_i < 12 && deck_i < deck.length; deck_i++) {
-            var face= deck[deck_i];
-            if (!lookup[face]) continue;
-
-console.log("rem", deck_i);
-            deck.splice(deck_i, 1);
-            var card= card_by_face(face);
-            if (card) ch_cards.push(card);
-            deck_i--;
-        }
-
-
-        if (ch_cards.length) {
-console.log(ch_cards);
-
-            var deck_i= 12 - ch_cards.length;
-            for (var i in ch_cards) {
-
-console.log(deck_i);
-
-
-                card= ch_cards[i];
-                card.setFace(deck_i < deck.length ? deck[deck_i] : -1);
-                deck_i++;
+        var selected_lookup= function() {
+            var result= {};
+            for (var i= 0; i < _selected.length; i++) {
+                result[_selected[i]]= i + 1;
             }
+            return result;
+        };
+
+        var _refresh= function() {
+
+            _selected.length == 3
+                ? $("#cards").addClass("set-fail")
+                : $("#cards").removeClass("set-fail");
+
+            var lookup= selected_lookup();
+            for (var i= 0; i < _cards.length; i++) {
+                var face= _cards[i].getFace();
+                if (face < 0) continue;
+                lookup[face] ? _cards[i].select() : _cards[i].deselect();
+            }
+        };
+
+        var card_by_face= function(face) {
+            for (var i= 0; i < _cards.length; i++) {
+                if (_cards[i].getFace() == face) return _cards[i];
+            }
+            return null;
+        };
+
+        var init_game= function() {
+            _vdeck.add(hdeck.pull2(_vdeck.stack, _cards.length));
+
+            for (var i= 0; i < _cards.length; i++) _cards[i].setFace(_vdeck.get(i));
         }
 
-        _deck_selected= [];
-        _deck_solutions= null;
-        cards_refresh();
+        var deselect_all= function() {
+            _selected= [];
+            _refresh();
+        };
 
-        return;
-
-
-        var lookup= deck_selected_lookup();
-        var j= 0;
-        for (var i in lookup) {
+        var is_selected= function(face) {
+            for (var i= 0; i < _selected.length; i++) {
+                if (_selected[i] == face) return true;
+            }
+            return false;
         }
 
-        var card_is= [];
-        for (var i= 0; i < _deck_selected.length; i++) {
-            var face= _deck_selected[i];
-            for (var j= 0; j < 12; j++) {
-                if (deck[j] == face) {
-                    deck.splice(j, 1);
-                    var card= card_by_face(face);
-                    if (card) card.setFace(deck.length < 12 ? -1 : deck[11]);
+        var toggle_select= function(face) {
+            for (var i= 0; i < _selected.length; i++) {
+                if (_selected[i] == face) {
+                    _selected.splice(i, 1);
+                    _refresh();
+                    return;
+                }
+            }
+            _selected.push(face);
+            _refresh();
+        };
+
+        var next_cards= function() {
+
+            _vdeck.removeFace(_selected);
+
+            var faces= hdeck.pull2(_vdeck.stack, _cards.length);
+            var vdeck_i= _vdeck.count();
+            _vdeck.add(faces);
+
+            for (var i= 0; i < _selected.length; i++) {
+                var card= card_by_face(_selected[i]);
+                if (card) card.setFace(_vdeck.get(vdeck_i++));
+            }
+
+            _selected= [];
+            _solutions= null;
+            _refresh();
+        }
+
+        var check_solution= function() {
+            if (_selected.length != 3) return;
+
+                    next_cards(); return;
+
+            _selected.sort(intcmp);
+
+            var solutions= _vdeck.solutions();
+            for (var i= 0; i < solutions.length; i++) {
+                var sol= solutions[i];
+                if (sol[0] == _selected[0] && sol[1] == _selected[1] && sol[2] == _selected[2]) {
+                    next_cards();
                     break;
                 }
             }
-        }
-        _deck_selected= [];
-        _deck_solutions= null;
-        cards_refresh();
-    };
+        };
 
-    var deck_check_solution= function() {
-        if (_deck_selected.length != 3) return;
+        var init= function() {
+            var html= [];
+            var id= 0;
 
-        _deck_selected.sort(intcmp);
-
-                deck_next_cards(); return;
-
-
-        var solutions= deck_solutions();
-        for (var i= 0; i < solutions.length; i++) {
-            var sol= solutions[i];
-            if (sol[0] == _deck_selected[0] && sol[1] == _deck_selected[1] && sol[2] == _deck_selected[2]) {
-                deck_next_cards();
-                break;
+            // FIXME: only works with 12 cards atm
+            html.push("<table>");
+            for (var y= 0; y < 3; y++) {
+                html.push("<tr>");
+                for (var x= 0; x < 4; x++) {
+                    var id= y + x * 3;
+                    html.push("<td><div class='card' id='card", id, "'></div></td>");
+                }
+                html.push("</tr>");
             }
-        }
+            html.push("</table>");
+            $("#cards").html(html.join(''));
+
+            for (var i= 0; i < vcards_n; i++) {
+                _cards.push(new Card(i));
+            }
+
+            $('.card').live('click', function(ev) {
+                var face= _cards[parseInt(this.id.substr(4))].getFace();
+                if (!is_selected(face) && _selected.length >= 3) deselect_all();
+                toggle_select(face);
+                check_solution();
+                // show_status();
+                return false;
+            });
+
+            $('body').live('click', function(ev) {
+                deselect_all();
+            });
+        };
+
+        init();
+
+        this.init_game= init_game;
+        return this;
     };
+
 
     // ============================================================================
     //      Behaviours
     // ============================================================================
 
-    $('.card').live('click', function(ev) {
-        var face= cards[parseInt(this.id.substr(4))].getFace();
-        if (!deck_selected(face) && _deck_selected.length >= 3) deck_deselect_all();
-        deck_toggle_select(face);
-        deck_check_solution();
-        show_status();
-        return false;
-    });
-
-    $('body').live('click', function(ev) {
-        deck_deselect_all();
-    });
-
     // ============================================================================
     //      Main
     // ============================================================================
 
-    cards_init();
-    deck_init();
+    var hdeck= new CardStack();
+    for (var i= 0; i < 81; i++) hdeck.add(i);
+    hdeck.shuffle();
 
-//    deck.unshift(
+    var vcards= new VisibleCards(hdeck, 12);
+    vcards.init_game();
 
-    for (var i= 0; i < 12; i++) cards[i].setFace(deck[i]);
-    show_status();
+//    cards_init();
+//    deck_init();
+
+//    for (var i= 0; i < 12; i++) cards[i].setFace(deck[i]);
+//    show_status();
 
 });
