@@ -25,6 +25,15 @@ jQuery(function($) {
         return 0;
     };
 
+    var shuffle= function(arr) {
+        for (var i= 0; i < arr.length; i++) {
+            var n= Math.floor(Math.random() * arr.length);
+            var tmp= arr[i];
+            arr[i]= arr[n];
+            arr[n]= tmp;
+        }
+    };
+
     // ========================================================================
     //   DOM Event handlers
     // ========================================================================
@@ -120,16 +129,6 @@ jQuery(function($) {
     };
 
     // ============================================================================
-    //      Cards
-    // ============================================================================
-
-    // BROKEN
-    var show_status= function() {
-        var count= deck_solutions().length > 0;
-        $("#solutions").text(count);
-    };
-
-    // ============================================================================
     //      Card Stack
     // ============================================================================
 
@@ -157,20 +156,13 @@ jQuery(function($) {
             return _stack.shift();
         };
 
-        var shuffle= function() {
-            for (var i= 0; i < _stack.length; i++) {
-                var n= Math.floor(Math.random() * _stack.length);
-                var tmp= _stack[i];
-                _stack[i]= _stack[n];
-                _stack[n]= tmp;
-            }
-
-            // solutions stay the same
+        var _shuffle= function() {
+            shuffle(_stack);
         };
 
-        var solutions= function() {
+        var solutions= function(force) {
 
-            if (_solutions) return _solutions;
+            if (!force && _solutions) return _solutions;
 
             var check= [];
             for (var i= 0; i < _stack.length; i++) {
@@ -212,12 +204,48 @@ jQuery(function($) {
             return _solutions;
         };
 
+        // FIXME: sane name
         var pull2= function(basis, count) {
             var result= [];
             for (var i= basis.length; i < count; i++) {
                 result.push(pull());
             }
             return result;
+        };
+
+        // FIXME: sane name
+        var pull3= function(basis, count) {
+            var by_sols= [ _stack.concat(), null, null, null ];
+
+// console.log("basis:", basis);
+// console.log("stack:", _stack);
+
+            for (var r= 0; r < 100; r++) {
+
+                _stack= basis.concat();
+                for (var i= 0; basis.length + i < count && i < by_sols[0].length; i++) {
+                    _stack.push(by_sols[0][i]);
+                }
+                var n= solutions(true).length;
+                if (n > 0 && n < 4 && !by_sols[n]) {
+                    by_sols[n]= by_sols[0].concat();
+                    if (n == 1) break;  // short circuit
+                }
+                shuffle(by_sols[0]);
+            }
+
+            var n= 0;
+            if (by_sols[1]) n= 1;
+            else if (by_sols[2]) n= 2;
+            else if (by_sols[3]) n= 3;
+
+// console.log("bysol:", by_sols);
+// console.log("bysol:", by_sols[n]);
+
+            _stack= by_sols[n].concat();
+            _solutions= null;
+
+            return pull2(basis, count);
         };
 
         var getStack= function() {
@@ -235,9 +263,9 @@ jQuery(function($) {
 
         this.add= add;
         this.pull= pull;
-        this.pull2= pull2;
+        this.pull2= pull3;
         this.removeFace= removeFace;
-        this.shuffle= shuffle;
+        this.shuffle= _shuffle;
         this.solutions= solutions;
         this.stack= getStack;
         this.get= getFace;
@@ -274,6 +302,9 @@ jQuery(function($) {
                 if (face < 0) continue;
                 lookup[face] ? _cards[i].select() : _cards[i].deselect();
             }
+
+            var count= _vdeck.solutions().length;
+            $("#solutions").text(count);
         };
 
         var card_by_face= function(face) {
@@ -284,9 +315,10 @@ jQuery(function($) {
         };
 
         var init_game= function() {
-            _vdeck.add(hdeck.pull2(_vdeck.stack, _cards.length));
+            _vdeck.add(hdeck.pull2(_vdeck.stack(), _cards.length));
 
             for (var i= 0; i < _cards.length; i++) _cards[i].setFace(_vdeck.get(i));
+            _refresh();
         }
 
         var deselect_all= function() {
@@ -317,7 +349,7 @@ jQuery(function($) {
 
             _vdeck.removeFace(_selected);
 
-            var faces= hdeck.pull2(_vdeck.stack, _cards.length);
+            var faces= hdeck.pull2(_vdeck.stack(), _cards.length);
             var vdeck_i= _vdeck.count();
             _vdeck.add(faces);
 
@@ -334,7 +366,7 @@ jQuery(function($) {
         var check_solution= function() {
             if (_selected.length != 3) return;
 
-                    next_cards(); return;
+            // next_cards(); return;
 
             _selected.sort(intcmp);
 
@@ -404,6 +436,11 @@ jQuery(function($) {
 
     var vcards= new VisibleCards(hdeck, 12);
     vcards.init_game();
+
+    // ============================================================================
+    //      Cards
+    // ============================================================================
+
 
 //    cards_init();
 //    deck_init();
