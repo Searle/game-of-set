@@ -10,13 +10,25 @@
     <h1>Hello World!</h1>
     <table>
         {{#each row}}
-            <tr>
-                {{#each col cards}}
-                <td>
-                    {{card}}
-                </td>
-                {{/each}}
-            </tr>
+            {{> cardRow}}
         {{/each}}
     </table>
+</template>
+
+<template name="cardRow">
+    <tr>
+        {{#each col row}}
+        <td>
+            {{> card}}
+        </td>
+        {{/each}}
+    </tr>
+</template>
+
+<template name="card">
+    {{#if selected}}
+        <a href="#"><b>{{card}}</b></a>
+    {{else}}
+        <a href="#">{{card}}</a>
+    {{/if}}
 </template>
