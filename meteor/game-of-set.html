@@ -1,0 +1,22 @@
+<head>
+  <title>game-of-set</title>
+</head>
+
+<body>
+  {{> cardSet}}
+</body>
+
+<template name="cardSet">
+    <h1>Hello World!</h1>
+    <table>
+        {{#each row}}
+            <tr>
+                {{#each col cards}}
+                <td>
+                    {{card}}
+                </td>
+                {{/each}}
+            </tr>
+        {{/each}}
+    </table>
+</template>
