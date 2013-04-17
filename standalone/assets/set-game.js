@@ -239,6 +239,11 @@ jQuery(function($) {
             else if (by_sols[2]) n= 2;
             else if (by_sols[3]) n= 3;
 
+// Das hatte ich irgendwann aktualisiert, ich weiss aber nicht mehr warum:
+//            if (by_sols[3]) n= 3;
+//            if (by_sols[1]) n= 1;
+//            if (by_sols[2]) n= 2;
+
 // console.log("bysol:", by_sols);
 // console.log("bysol:", by_sols[n]);
 

@@ -1,0 +1,9 @@
+
+The Game of SET
+
+This is a simple HTML-Version of the game SET,
+the version in standalone/ work fine.
+
+The folder meteor/ contains the playground for a
+meteor-implementation, see meteor.com for more
+information.
