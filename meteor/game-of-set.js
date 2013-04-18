@@ -4,7 +4,7 @@ var getCardSet= function() {
     return CardSets.findOne();
 };
 
-if (Meteor.isClient) {
+if ( Meteor.isClient ) {
 
     var selectedCards= {};
     Session.set('selectedCards', selectedCards)
@@ -20,10 +20,10 @@ if (Meteor.isClient) {
 
     Template.cardRow.col= function( row ) {
         var cardSet= getCardSet();
-        if ( cardSet && cardSet.set && cardSet.set[row] ) {
+        if ( cardSet && cardSet.set && (row in cardSet.set) ) {
             var cardRow= cardSet.set[row];
             return cardRow.map(function( v, i ) {
-                var key= buildCardIndex(v);
+                // var key= buildCardIndex(v);
                 return { row: row, col: i, card: v, };
             });
         }
@@ -64,7 +64,7 @@ if (Meteor.isClient) {
     });
 }
 
-if (Meteor.isServer) {
+if ( Meteor.isServer ) {
     Meteor.startup(function () {
         if ( !getCardSet() ) {
             var cardSet= [
