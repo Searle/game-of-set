@@ -34,6 +34,11 @@ if ( Meteor.isClient ) {
         return key in Session.get('selectedCards');
     }
 
+    Template.card.class= function() {
+        var key= buildCardIndex(this);
+        return key in Session.get('selectedCards') ? "selected" : "";
+    }
+
     Template.card.events({
         'click a': function() {
             var key= buildCardIndex(this);
