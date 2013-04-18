@@ -1,14 +1,14 @@
 <head>
     <title>game-of-set</title>
-    <link rel="stylesheet" type="text/css" href="assets/all.css"></link>
 </head>
 
 <body>
-    {{> cardSet}}
+    <div id="cards">
+        {{> cardSet}}
+    </div>
 </body>
 
 <template name="cardSet">
-    <h1>Hello World!</h1>
     <table>
         {{#each row}}
             {{> cardRow}}
@@ -22,21 +22,21 @@
 <template name="cardRow">
     <tr>
         {{#each col}}
-        <td>
-            {{> card}}
-        </td>
+            <td>
+                {{> card}}
+            </td>
         {{/each}}
     </tr>
 </template>
 
 <template name="card">
     <div class="card {{class}}">
-    {{#each cardElem}}
-        {{> cardElem}}
-    {{/each}}
+        {{#each cardElem}}
+            {{> cardElem}}
+        {{/each}}
     </div>
 </template>
 
 <template name="cardElem">
-    <div class="card-elem" style="background: transparent url(assets/card.png) no-repeat -{{cssX}}px -{{cssY}}px"></div>
+    <div class="card-elem" style="background-position: -{{cssX}}px -{{cssY}}px"></div>
 </template>

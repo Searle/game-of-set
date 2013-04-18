@@ -39,7 +39,7 @@ Card.prototype.key= function() {
 var cardsMatch= function( c1, c2, c3 ) {
     var matches= true;
 
-    ['fill', 'motive', 'color', 'count'].forEach(function( type ) {
+    [ 'fill', 'motive', 'color', 'count' ].forEach(function( type ) {
         t1= c1[type];
         t2= c2[type];
         t3= c3[type];
