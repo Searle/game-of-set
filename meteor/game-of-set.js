@@ -1,84 +1,172 @@
-var CardSets = new Meteor.Collection("cardSets");
+var Games = new Meteor.Collection("games");
 
-var getCardSet= function() {
-    return CardSets.findOne();
+var loadGame= function() {
+    return Games.findOne();
+};
+
+var Card= function(num, row, col) {
+
+    this.row= row;
+    this.col= col;
+
+    this.setFace= function(num) {
+        this.num=    num;
+        this.fill=   num % 3; num = Math.floor(num / 3);
+        this.motive= num % 3; num = Math.floor(num / 3);
+        this.color=  num % 3; num = Math.floor(num / 3);
+        this.count=  num % 3;;
+
+        this.cssX= this.fill * 96 + this.color * 32;
+        this.cssY= this.motive * 64;
+    }
+
+    this.setFace(num);
+}
+Card.prototype.key= function() {
+    return this.row + "-" + this.col;
+};
+
+var cardsMatch= function(c1, c2, c3) {
+    var matches= true;
+    ['fill', 'motive', 'color', 'count'].forEach(function(type) {
+        t1= c1[type];
+        t2= c2[type];
+        t3= c3[type];
+        matches= matches && ((t1 === t2 && t1 === t3) || (t1 !== t2 && t2 !== t3 && t1 !== t3));
+    })
+    return matches;
+}
+
+var initGame= function() {
+    var game= loadGame();
+    if (game) Games.remove({ _id: game._id });
+
+    var cardStack= [];
+    for (var i= 3 * 3 * 3 * 3 - 1; i >= 0; i--) {
+        cardStack.push(i);
+    }
+
+    for (var j, x, i = cardStack.length; i; j = parseInt(Math.random() * i), x = cardStack[--i], cardStack[i] = cardStack[j], cardStack[j] = x);
+
+    var visibleCards= [];
+    for (var r= 0; r < 3; r++) {
+        var row= [];
+        visibleCards.push(row);
+        for (var c= 0; c < 4; c++) {
+            row.push(cardStack.shift());
+        }
+    }
+
+    Games.insert({ visibleCards: visibleCards, cardStack: cardStack, round: 0, });
 };
 
 if ( Meteor.isClient ) {
 
-    var selectedCards= {};
+    var buildCards= function(visibleCards) {
+        return visibleCards.map(function(row, r) {
+            return {
+                cols: row.map(function(num, c) {
+                    return {
+                        card: new Card(num, r, c),
+                    };
+                }),
+            };
+        });
+    }
+
+    var selectedCards= [];
     Session.set('selectedCards', selectedCards)
 
-    var buildCardIndex= function( card ) {
-        return card.row + "-" + card.col;
-    };
 
     Template.cardSet.row= function() {
-        var cardSet= getCardSet();
-        if ( cardSet ) return cardSet.set.map(function( v, i ) { return { row: i, cards: v, }; });
+        var game= loadGame();
+        if ( game && "visibleCards" in game ) return buildCards(game.visibleCards);
     }
+
+    Template.cardSet.events({
+        'click .shuffleCards': initGame,
+    });
 
     Template.cardRow.col= function( row ) {
-        var cardSet= getCardSet();
-        if ( cardSet && cardSet.set && (row in cardSet.set) ) {
-            var cardRow= cardSet.set[row];
-            return cardRow.map(function( v, i ) {
-                // var key= buildCardIndex(v);
-                return { row: row, col: i, card: v, };
-            });
-        }
-    }
-
-    Template.card.selected= function() {
-        var key= buildCardIndex(this);
-        return key in Session.get('selectedCards');
+        return this.cols;
     }
 
     Template.card.class= function() {
-        var key= buildCardIndex(this);
-        return key in Session.get('selectedCards') ? "selected" : "";
+        var card= this.card;
+        return (Session.get('selectedCards') || []).filter(function(c) {
+            return c.num === card.num;
+        }).length ? "selected" : "";
+    }
+
+    Template.card.cardElem= function() {
+        var elems= [];
+        for (var i= this.card.count; i >= 0; i--) {
+            elems.push(this);
+        }
+        return elems;
+    }
+
+    Template.cardElem.cssX= function() {
+        return this.card.cssX;
+    }
+
+    Template.cardElem.cssY= function() {
+        return this.card.cssY;
     }
 
     Template.card.events({
-        'click a': function() {
-            var key= buildCardIndex(this);
-            if ( key in selectedCards ) {
-                delete selectedCards[key];
+        'click .card': function() {
+            var card= this.card;
+            var oldSelected= selectedCards;
+            selectedCards= selectedCards.filter(function(c) {
+                return c.num !== card.num;
+            });
+            if (oldSelected.length != selectedCards.length) {
                 Session.set('selectedCards', selectedCards)
                 return;
             }
 
-            selectedCards[key]= 1;
+            selectedCards.push(this.card);
             Session.set('selectedCards', selectedCards)
 
-            if ( Object.keys(selectedCards).length < 3 ) return;
+            if ( selectedCards.length < 3 ) return;
 
-            var cardSet= getCardSet();
+            if (cardsMatch(selectedCards[0], selectedCards[1], selectedCards[2])) {
+                console.log("MATCH")
+                var game= loadGame();
 
-            for ( var key in selectedCards ) {
-                var parts= key.split("-");
-                var row= parts[0];
-                var col= parts[1];
-                cardSet.set[row][col]= -cardSet.set[row][col];
+                selectedCards.forEach(function(card) {
+                    var face= game.cardStack.shift();
+//                    card.setFace(face);
+                    game.visibleCards[card.row][card.col]= face;
+                });
+                game.round++;
+                Games.update(game._id, { $set: { visibleCards: game.visibleCards, cardStack: game.cardStack, round: game.round, }});
             }
-            selectedCards= {};
-            Session.set('selectedCards', selectedCards)
 
-            CardSets.update(cardSet._id, cardSet);
+            selectedCards= [];
+            Session.set('selectedCards', selectedCards)
         }
     });
 }
 
 if ( Meteor.isServer ) {
+    Games.allow({
+        update: function(userId, doc, fieldNames, modifier) {
+            var nextRound= doc.round + 1;
+            return modifier['$set'].round === nextRound;
+        },
+        insert: function(userId, doc) {
+            return true;
+        },
+        remove: function(userId, doc) {
+            return true;
+        },
+    })
     Meteor.startup(function () {
-        if ( !getCardSet() ) {
-            var cardSet= [
-                [11, 12, 13, 14],
-                [21, 22, 23, 24],
-                [31, 32, 33, 34],
-            ];
-
-            CardSets.insert({ set: cardSet });
+        var game= loadGame();
+        if ( !game || !game.visibleCards  ) {
+            initGame();
         }
     });
 }
