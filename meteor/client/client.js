@@ -4,7 +4,7 @@ var cardSet= [];
 var round;
 
 var buildCards= function() {
-    var game= loadGame();
+    var game= Game.load();
 
     if ( !game || !("visibleCards" in game) ) {
         cardSet= [];
@@ -41,7 +41,7 @@ Template.cardSet.row= function() {
 Template.cardSet.events({
     'click .shuffleCards': function() {
         cardSet= [];
-        initGame();
+        Game.init();
     },
 });
 
@@ -87,7 +87,7 @@ Template.card.events({
 
         if ( Card.matches(selectedCards[0], selectedCards[1], selectedCards[2]) ) {
             console.log("MATCH")
-            var game= loadGame();
+            var game= Game.load();
 
             selectedCards.forEach(function(card) {
                 var face= game.cardStack.shift();

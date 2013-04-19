@@ -16,11 +16,6 @@ Games.allow({
 })
 
 // public
-loadGame= function() {
-    return Games.findOne();
-};
-
-// public
 Card= function( num, row, col ) {
 
     this.row= row;
@@ -75,8 +70,15 @@ var shuffle= function( arr ) {
 };
 
 // public
-initGame= function() {
-    var game= loadGame();
+Game= function() {
+};
+
+Game.load= function() {
+    return Games.findOne();
+};
+
+Game.init= function() {
+    var game= Game.load();
 
     if ( game ) {
         round= game.round;

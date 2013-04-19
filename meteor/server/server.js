@@ -1,8 +1,8 @@
 
 Meteor.startup(function () {
-    var game= loadGame();
+    var game= Game.load();
 
     if ( !game || !game.visibleCards  ) {
-        initGame();
+        Game.init();
     }
 });
