@@ -1,0 +1,44 @@
+<head>
+    <title>game-of-set</title>
+</head>
+
+<body>
+    <div id="cards">
+        {{> cardSet}}
+    </div>
+</body>
+
+<template name="cardSet">
+    <table>
+        {{#each row}}
+            {{> cardRow}}
+        {{/each}}
+    </table>
+
+    <br />
+    <input type="button" value="shuffle" class="shuffleCards" />
+</template>
+
+<template name="cardRow">
+    <tr>
+        {{#each col}}
+            <td>
+                {{> card}}
+            </td>
+        {{/each}}
+    </tr>
+</template>
+
+<template name="card">
+    <div class="card {{class}}">
+        <div class="inner">
+            {{#each cardElem}}
+                {{> cardElem}}
+            {{/each}}
+        </div>
+    </div>
+</template>
+
+<template name="cardElem">
+    <div class="card-elem" style="background-position: -{{cssX}}px -{{cssY}}px"></div>
+</template>

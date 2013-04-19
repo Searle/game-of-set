@@ -48,6 +48,15 @@ var cardsMatch= function( c1, c2, c3 ) {
     return matches;
 }
 
+var shuffle= function( arr ) {
+    for ( var i= 0; i < arr.length; i++ ) {
+        var n= Math.floor(Math.random() * arr.length);
+        var tmp= arr[i];
+        arr[i]= arr[n];
+        arr[n]= tmp;
+    }
+};
+
 var initGame= function() {
     var game= loadGame();
 
@@ -57,11 +66,11 @@ var initGame= function() {
     }
 
     var cardStack= [];
-    for (var i= 3 * 3 * 3 * 3 - 1; i >= 0; i--) {
+    for ( var i= 3 * 3 * 3 * 3 - 1; i >= 0; i-- ) {
         cardStack.push(i);
     }
 
-    for (var j, x, i = cardStack.length; i; j = parseInt(Math.random() * i), x = cardStack[--i], cardStack[i] = cardStack[j], cardStack[j] = x);
+    shuffle(cardStack);
 
     var visibleCards= [];
     for ( var r= 0; r < 4; r++ ) {

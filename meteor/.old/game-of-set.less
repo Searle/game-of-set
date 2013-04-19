@@ -1,0 +1,38 @@
+
+/* ============================================================================ */
+/*      Cards
+/* ============================================================================ */
+
+.card {
+    border-radius: 5px;
+    border: 1px solid #CCC;
+    background-color: #FFF;
+    width: 150px;
+    height: 100px;
+    text-align: center;
+    line-height: 150px;
+    x-border: 4px solid transparent;
+    cursor: pointer;
+
+    &:hover {
+        x-border-color: #DEB476;
+    }
+
+    &.selected {
+        background-color: #DEB476;
+    }
+}
+
+#cards.set-fail {
+    .card.selected {
+        background-color: #FFB476;
+    }
+}
+
+.card-elem {
+    display: inline-block;
+    margin-top: 18px;
+    width: 32px;
+    height: 64px;
+    background: transparent url(card.png) no-repeat;
+}

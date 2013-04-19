@@ -31,9 +31,11 @@
 
 <template name="card">
     <div class="card {{class}}">
-        {{#each cardElem}}
-            {{> cardElem}}
-        {{/each}}
+        <div class="inner">
+            {{#each cardElem}}
+                {{> cardElem}}
+            {{/each}}
+        </div>
     </div>
 </template>
 
