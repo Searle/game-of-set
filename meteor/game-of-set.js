@@ -14,7 +14,7 @@ var Card= function(num, row, col) {
         this.fill=   num % 3; num = Math.floor(num / 3);
         this.motive= num % 3; num = Math.floor(num / 3);
         this.color=  num % 3; num = Math.floor(num / 3);
-        this.count=  num % 3;;
+        this.count=  num % 3 + 1;
 
         this.cssX= this.fill * 96 + this.color * 32;
         this.cssY= this.motive * 64;
@@ -62,14 +62,19 @@ var initGame= function() {
 
 if ( Meteor.isClient ) {
 
-    var buildCards= function(visibleCards) {
-        return visibleCards.map(function(row, r) {
+    var cardSet= [];
+
+    var buildCards= function() {
+        var game= loadGame();
+        visibleCards= game && "visibleCards" in game ? game.visibleCards : [];
+
+        return cardSet= visibleCards.map(function(row, r) {
             return {
                 cols: row.map(function(num, c) {
                     return {
                         card: new Card(num, r, c),
                     };
-                }),
+                })
             };
         });
     }
@@ -77,14 +82,16 @@ if ( Meteor.isClient ) {
     var selectedCards= [];
     Session.set('selectedCards', selectedCards)
 
-
     Template.cardSet.row= function() {
-        var game= loadGame();
-        if ( game && "visibleCards" in game ) return buildCards(game.visibleCards);
+        if (cardSet.length) return cardSet;
+        return buildCards();
     }
 
     Template.cardSet.events({
-        'click .shuffleCards': initGame,
+        'click .shuffleCards': function() {
+            initGame();
+            buildCards();
+        },
     });
 
     Template.cardRow.col= function( row ) {
@@ -100,18 +107,12 @@ if ( Meteor.isClient ) {
 
     Template.card.cardElem= function() {
         var elems= [];
-        for (var i= this.card.count; i >= 0; i--) {
-            elems.push(this);
+        var card= this.card;
+        var cardElem= {cssX: card.cssX, cssY: card.cssY};
+        for (var i= 0; i < card.count; i++) {
+            elems.push(cardElem);
         }
         return elems;
-    }
-
-    Template.cardElem.cssX= function() {
-        return this.card.cssX;
-    }
-
-    Template.cardElem.cssY= function() {
-        return this.card.cssY;
     }
 
     Template.card.events({
@@ -137,7 +138,7 @@ if ( Meteor.isClient ) {
 
                 selectedCards.forEach(function(card) {
                     var face= game.cardStack.shift();
-//                    card.setFace(face);
+                    card.setFace(face);
                     game.visibleCards[card.row][card.col]= face;
                 });
                 game.round++;
