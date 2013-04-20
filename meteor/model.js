@@ -81,7 +81,6 @@ Game.init= function() {
     var game= Game.load();
 
     if ( game ) {
-        round= game.round;
         Games.remove({ _id: game._id });
     }
 
