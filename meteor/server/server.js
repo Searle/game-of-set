@@ -6,3 +6,9 @@ Meteor.startup(function () {
         Game.init();
     }
 });
+
+Meteor.methods({
+    shuffle: function() {
+        Game.init();
+    }
+});
