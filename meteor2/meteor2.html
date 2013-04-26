@@ -1,0 +1,38 @@
+<head>
+  <title>meteor2</title>
+</head>
+
+<body>
+  {{> hello}}
+
+<script>
+//    $('#btn1').dropdown();
+</script>
+
+</body>
+
+<template name="hello">
+  <h1>Hello World!</h1>
+  {{greeting}}
+  <input type="button" value="Click" />
+
+    <div class="dropdown" id="menu1">
+
+<!--    <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">
+      Dropdown
+      <b class="caret"></b>
+    </a> -->
+
+    <button class="btn" data-toggle="dropdown" href="#menu1">Left</button>
+
+    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+    <li><a tabindex="-1" href="#">Action</a></li>
+    <li><a tabindex="-1" href="#">Another action</a></li>
+    <li><a tabindex="-1" href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a tabindex="-1" href="#">Separated link</a></li>
+    </ul>
+    </div>
+
+
+</template>
