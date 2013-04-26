@@ -40,8 +40,8 @@ Template.cardSet.row= function() {
 
 Template.cardSet.events({
     'click .shuffleCards': function() {
-        cardSet= [];
-        Game.init();
+        Meteor.call('shuffle');
+        return;
     },
 });
 
